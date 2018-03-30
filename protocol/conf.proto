@@ -1,0 +1,25 @@
+// 约定：首字母为C是客户端请求协议，首字母为S是服务器返回协议，其他为嵌套结构体
+// 全局属性
+package protocol; 
+import "vo.proto";
+
+// 获取游戏全局配置数据
+message CConfig
+{ 
+	optional uint32 code = 1 [default = 4000];//协议号
+}  
+message SConfig
+{ 
+	optional uint32 code = 1 [default=4000];//协议号
+	repeated RoomAttrube room= 2;  //房间属性
+	required SysConfig sys= 4;  //
+	optional uint32 error= 6 [default = 0]; // 错误码 
+}
+// 系统配置
+message SysConfig { 
+	required string imageserver= 1;  // 玩家头像图片服务器地址和端口
+	required uint32 discardtimeout= 2;  // 出牌超时时长(单位/秒)
+	required string version= 3;  // 版本号
+	required string feedbackserver= 4;  // 反馈截图服务器地址和端口
+	required string shareaddr= 5;  // 分享地址
+}

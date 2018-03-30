@@ -1,0 +1,50 @@
+#!/bin/bash
+
+# bin            宜春运营服    端口：8085   db: 2225   robot: 1235
+
+TARGET=182.254.232.206
+# TARGET_DIR=/data/server/bin
+
+if [ "$1" == "bin" ]; then
+	TARGET_DIR=/data/yichun/$1
+fi
+
+if [ "$TARGET_DIR" == "" ]; then
+	echo "TARGET_DIR DIR ERROR $1"
+	echo "use eg: ./sync bin"
+	echo "bin          宜春运营服"
+	exit 1
+fi
+
+if [[ ! -f piaoserver ]]; then
+	echo "NOT EXISTING FILE server"
+	exit 0
+fi
+
+if [[ ! -d csv ]]; then
+	echo "NOT EXISTING DIR csv"
+	exit 0
+fi
+
+if [[ `ssh ${TARGET} ls ${TARGET_DIR} | grep "^piaoserver$" | wc -l` = 1 ]]; then
+	echo "EXISTING FILE server"
+	`ssh ${TARGET} mv -f ${TARGET_DIR}/piaoserver ${TARGET_DIR}/bakup`
+fi
+
+if [[ `ssh ${TARGET} test -d ${TARGET_DIR}/csv; echo $?` = 0 ]]; then
+	echo "EXISTING DIR csv"
+	if [[ `ssh ${TARGET} test -d ${TARGET_DIR}/bakup/csv; echo $?` = 0 ]]; then
+		`ssh ${TARGET} mv -f ${TARGET_DIR}/csv/*.csv ${TARGET_DIR}/bakup/csv/`
+	else
+		echo "NOT EXISTING DIR bakup/csv"
+		exit 0
+	fi
+else
+	echo "NOT EXISTING DIR csv"
+	exit 0
+fi
+
+scp piaoserver ${TARGET}:${TARGET_DIR}
+scp csv/*.csv ${TARGET}:${TARGET_DIR}/csv
+
+echo "OK"

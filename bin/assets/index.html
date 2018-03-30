@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>后台发牌测试</title>
+    <meta charset="utf-8">
+    <style type="text/css">
+        .content {
+            margin: 10px auto;
+        }
+
+        .robot, .item {
+            margin-top: 10px;
+            margin-left: 300px;
+        }
+
+        .card {
+            margin-left: 10px;
+            margin-top: 10px;
+        }
+
+        .seats item:input:focus {
+            color: #ed1941;
+            border: 1px solid #2468a2;
+            background-color: #afdfe4;
+        }
+
+        div[class*="img"]{
+            margin-top: 5px;
+            margin-left: 300px;
+        }
+
+    </style>
+</head>
+<body>
+
+<div class="content">
+    <div class="robot">
+        <label>机器人个数:</label><input type="text" name="robotnum" value="3"/>
+        <label>房间号</label><input type="text" name="roomid" value=""/>
+        <label>财神</label><input type="text" name="wildcard" value=""/>
+        <!--<label>创建房间:</label><input type="button" name="create" onclick="createRoom(this)"/>-->
+    </div>
+
+    <div class="seats">
+        <div class="img1"></div>
+        <div class="item">
+            <label>座家:</label>
+            <input type="text" name="seat1" style="width: 500px" onclick="seatChange(this)" onblur="leave()">
+            <label for="seat1">0</label>
+        </div>
+        <div class="img2"></div>
+        <div class="item">
+            <label>闲家1:</label>
+            <input type="text" name="seat2" style="width: 500px" onclick="seatChange(this)" onblur="leave()">
+            <label for="seat2">0</label>
+        </div>
+        <div class="img3"></div>
+        <div class="item">
+            <label>闲家2:</label>
+            <input type="text" name="seat3" style="width: 500px" onclick="seatChange(this)" onblur="leave()">
+            <label for="seat3">0</label>
+        </div>
+        <div class="img4"></div>
+        <div class="item">
+            <label>闲家3:</label>
+            <input type="text" name="seat4" style="width: 500px" onclick="seatChange(this)" onblur="leave()">
+            <label for="seat4">0</label>
+        </div>
+        <div class="img5"></div>
+        <div class="item">
+            <label>剩余的牌:</label>
+            <input name="seat5" style="width: 500px" onclick="seatChange(this)" onblur="leave()">
+            <label for="seat5">0</label>
+        </div>
+        <div class="item">
+            <input type="button" value="做牌并邀请机器人" onmousemove="check(4)" onclick="submit(this)" style="margin-top: 30px; margin-left: 50px"/>
+            <input type="button" value="邀请机器人" onclick="autosubmit(this)" style="margin-top: 30px; margin-left: 50px"/>
+        </div>
+    </div>
+
+    <div class="cards">
+
+    </div>
+
+</div>
+
+<script type="text/javascript" src="/script/jquery-3.2.0.min.js">
+</script>
+
+<script type="text/javascript">
+    Array.prototype.remove = function(val) {
+        var index = this.indexOf(val);
+        if (index > -1) {
+            this.splice(index, 1);
+        }
+    };
+
+    var cards = [
+        // 万
+        0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09,
+        0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09,
+        0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09,
+        0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09,
+        // 条
+        0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x19,
+        0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x19,
+        0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x19,
+        0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x19,
+        // 饼
+        0x21, 0x22, 0x23, 0x24, 0x25, 0x26, 0x27, 0x28, 0x29,
+        0x21, 0x22, 0x23, 0x24, 0x25, 0x26, 0x27, 0x28, 0x29,
+        0x21, 0x22, 0x23, 0x24, 0x25, 0x26, 0x27, 0x28, 0x29,
+        0x21, 0x22, 0x23, 0x24, 0x25, 0x26, 0x27, 0x28, 0x29,
+
+        // 东南西北
+        0x41, 0x42, 0x43, 0x44,
+        0x41, 0x42, 0x43, 0x44,
+        0x41, 0x42, 0x43, 0x44,
+        0x41, 0x42, 0x43, 0x44,
+
+        // 中发白
+        0x51, 0x52, 0x53,
+        0x51, 0x52, 0x53,
+        0x51, 0x52, 0x53,
+        0x51, 0x52, 0x53,
+    ]
+
+
+    var seat = "seat1"
+    var img = "img1"
+    var selectedIndex = [] // 已经选中的下标数组
+    var allReady = false
+    cards.sort(function (a, b) {
+        return a - b
+    });
+
+
+    function toHex(index){
+        var hex = cards[index].toString(16)
+        if (hex.length == 1) {
+            hex = "0" + hex
+        }
+        return hex
+    }
+
+    for (var i = 0; i < cards.length; i++) {
+        var hex = toHex(i)
+        var addr = "/UI/0x" + hex + ".png"
+        $(".cards").append('<input onclick="select1(this)" class="card" type="image" value="' + i + '"src="' + addr + '" opt="0"/>')
+    }
+
+
+    function appendImgByIndex(index, sort){
+        var hex = toHex(index)
+        var addr = "/UI/0x" + hex + ".png"
+
+        var where = "."+img
+        var obj = $(where)
+        obj.append('<input onclick="unSelect(this)" type="image" value="' + index + '" src="' + addr + '" seat="' + seat +'" hex="' + hex + '"/>')
+
+        if (sort) {
+            var inputs = $(where+">input").toArray().sort(function(a, b){
+                return parseInt($(a).attr("hex")) - parseInt($(b).attr("hex"))
+            })
+            $(inputs).appendTo(where)
+        }
+    }
+
+    function appendImgByValue(value, sort){
+        var index = cards.indexOf(value)
+        if (index != -1){
+            var hex = toHex(index)
+            var addr = "/UI/0x" + hex + ".png"
+            var where = "."+img
+            var obj = $(where)
+            obj.append('<input onclick="unSelect(this)" type="image" src="' + addr + '" seat="' + seat +'" hex="' + hex + '"/>')
+            if (sort) {
+                var inputs = $(where+">input").toArray().sort(function(a, b){
+                    return parseInt($(a).attr("hex")) - parseInt($(b).attr("hex"))
+                })
+                $(inputs).appendTo(where)
+            }
+        }else{
+            alert("没有找到对应的牌", value)
+        }
+    }
+
+    function removeValue(ele){
+        // 把对应的值删掉掉
+        // 把下面已经选过的图片重置成没有选中的
+        // 个数减1
+        var belong = $(ele).attr("seat")
+        var hex =  parseInt($(ele).attr("hex"))
+        var index = parseInt($(ele).attr("value"))
+        var seat = 'input[name="' + belong + '"]'
+        var obj = $(seat)[0]
+        var arr = obj.value.split(' ').map(function(data){
+            return +data
+        })
+        var pos = arr.indexOf(cards[index])
+        arr.splice(pos, 1)
+        obj.value = arr.join(' ')
+        lenChange(arr.length, belong)
+
+        var card = $('.cards>input[value="'+index+'"]')[0]
+        var selected = $(card).attr("opt")
+        if (selected == 1) {
+            var hex = toHex(index)
+            var addr = "/UI/0x" + hex + ".png"
+            $(card).attr("src", addr)
+            $(card).attr("opt", 0)
+            console.log("after unselect selected index is "+selectedIndex+"len is"+selectedIndex.length)
+            pos = selectedIndex.indexOf(index)
+            if (pos != -1){
+                selectedIndex.splice(pos, 1)
+            }
+        }else{
+            alert("下标为"+index+"的这张牌没有被选择过")
+        }
+    }
+
+    function appendValue(index, where){
+        var obj = $(where)[0]
+        var curValue = obj.value
+        if (curValue == '') {
+            curValue = cards[index]
+        } else {
+            curValue = curValue + " " + cards[index]
+        }
+        obj.value = curValue
+        lenChange(obj.value.split(' ').length, seat)
+    }
+
+    function lenChange(len, where){
+        var str = 'label[for="' + where + '"]'
+        var obj = $(str)[0]
+        obj.innerText = len
+    }
+
+    // leave只有输入离开的时候检测,用来粘贴的时候显示图片
+    function leave(){
+        var str = 'input[name="' + seat + '"]'
+        var arr = filterEmptyStr($(str)[0].value.split(' '))
+        lenChange(arr.length, seat)
+        // 通过选择的牌型不需要在后面追加
+        var child = $("."+img).children().length
+        if (selectedIndex.length == 0 && child == 0) {
+            for (var i = 0; i < arr.length; i++) {
+                if (i == (arr.length - 1) && seat != "seat5") {
+                    appendImgByValue(parseInt(arr[i]), true)
+                } else {
+                    appendImgByValue(parseInt(arr[i]), false)
+                }
+            }
+        }
+    }
+
+    // 选择牌
+    function select1(ele) {
+        var sort = true
+        if (img == "img5") {
+            sort = false
+        }
+        var index = parseInt($(ele).attr("value"))
+        if ($(ele).attr("src") == "/UI/0x00.png") {
+            var hex = toHex(index)
+            var addr = "/UI/0x" + hex + ".png"
+            $(ele).attr("src", addr)
+            return
+        }
+
+        var selected = $(ele).attr("opt")
+        if (selected && selected == 0){
+            $(ele).attr("src", "/UI/0x00.png")
+            var str = 'input[name="' + seat + '"]'
+            appendValue(index, str)
+            appendImgByIndex(index, sort)
+            $(ele).attr("opt", "1")
+            selectedIndex.push(index)
+            console.log("after select selected index is "+selectedIndex+"len is"+selectedIndex.length)
+        }else{
+            $(ele).attr("src", "/UI/0x00.png")
+        }
+    }
+
+    function unSelect(ele) {
+        var value = ele.value
+        if (value != undefined && value != '') {
+            removeValue(ele)
+            ele.parentNode.removeChild(ele)
+        }else{
+            alert("手动粘贴的不支持删除^_^!!")
+        }
+        if (allReady && selectedIndex.length < cards.length){
+            allReady = false
+        }
+    }
+
+    // 选择的座位改变
+    function seatChange(ele) {
+        var before = seat
+        seat = $(ele).attr("name")
+        if (seat == "seat1"){
+            img = "img1"
+        }else if (seat == "seat2"){
+            img = "img2"
+        }else if(seat == "seat3"){
+            img = "img3"
+        }else if(seat == "seat4"){
+            img = "img4"
+        }else if(seat == "seat5"){
+            img = "img5"
+        }
+    }
+
+    function check(end){
+        if (allReady){
+            return
+        }
+        for (var i =  1; i <= end; i++) {
+            var str = 'input[name="seat' + i + '"]'
+            var num = $(str)[0].value.split(' ').length
+            if (i != 1){
+                if (num != 13){
+                    alert("闲家"+i+"一定是13张牌哟……")
+                    return
+                }
+            }else if (num != 14){
+                alert("庄家一定是14张牌哟……")
+                return
+            }
+        }
+        //算出剩余的牌
+        if (end == 4){
+            img = "img5"
+            seat = "seat5"
+            calcLeav()
+        }
+        
+    }
+
+    // 计算剩余的牌
+    function calcLeav(){
+        var seat1 = $("input[name='seat1']")[0].value
+        var seat2 = $("input[name='seat2']")[0].value
+        var seat3 = $("input[name='seat3']")[0].value
+        var seat4 = $("input[name='seat4']")[0].value
+
+        var seatArr = [3];
+
+        var arr = seat1.split(' ').map(function (data) {
+            return +data
+        })
+        seatArr[0] = filterEmptyStr(arr)
+
+        var arr = seat2.split(' ').map(function (data) {
+            return +data
+        })
+        seatArr[1] = filterEmptyStr(arr)
+
+        var arr = seat3.split(' ').map(function (data) {
+            return +data
+        })
+        seatArr[2] = filterEmptyStr(arr)
+
+        var arr = seat4.split(' ').map(function (data) {
+            return +data
+        })
+        seatArr[3] = filterEmptyStr(arr)
+ 
+        // 还没有选择的麻将
+        var noSelectedValue = []
+        var noSelectedIndex = []
+        var seat5Selected = []
+        var obj = $("input[name='seat5']")[0]
+        var seat5 = obj.value
+        if (seat5 != undefined && seat5 != '') {
+            seat5Selected = seat5.split(' ').map(function(data) {
+                return +data
+            })
+        }
+        seat5Selected = filterEmptyStr(seat5Selected)
+        if (selectedIndex.length > 0){
+            for (var i = 0; i < cards.length; i++) {
+                if (selectedIndex.indexOf(i) == -1){
+                    noSelectedIndex.push(i)
+                    noSelectedValue.push(cards[i])
+                }
+            }
+        }
+        console.log("noSelectedIndex lenght is", noSelectedIndex.length, noSelectedIndex)
+        noSelectedValue = noSelectedValue.concat(seat5Selected)
+        console.log(noSelectedValue)
+        // 牌值完整性验证
+        var allCards = noSelectedValue.concat(seatArr[0])
+        allCards = allCards.concat(seatArr[1])
+        allCards = allCards.concat(seatArr[2])
+        allCards = allCards.concat(seatArr[3])
+        allCards.sort(function (a, b) {
+            return a - b
+        });
+
+        if (cards.length != allCards.length){
+            alert("每个座位的牌不完整")
+            return
+        }
+
+        for (var i = 0; i < cards.length; i++) {
+            if (allCards[i] != cards[i]) {
+                alert("你提交的牌可能不是自己选的")
+                return
+            }
+        }
+
+        var ln = noSelectedIndex.length
+        for (var i = 0; i < ln; i++) {
+            var card = $('.cards>input[value="'+noSelectedIndex[i]+'"]')[0]
+            select1(card)
+        }
+        allReady = true
+    }
+
+
+    function filterEmptyStr(arr) {
+        var newArray = new Array()
+        var count = 0
+        for (var i = 0; i < arr.length; i++) {
+            if (arr[i]) {
+                newArray[count++] = arr[i]
+            }
+        }
+        return newArray
+    }
+
+
+    function filterRemve(orignal ,seatArr) {
+        for (var j = 0; j < seatArr.length; j++) {
+            for (var i = 0; i < orignal.length; i++) {
+                if (orignal[i] == seatArr[j]) {
+                   orignal.splice(i,1);
+                    break
+                }
+            }
+        }
+        return orignal
+    }
+
+    function submit(ele) {
+        if (!allReady){
+            alert("都还没准备好!")
+            return
+        }
+        var robotnum = parseInt($("input[name='robotnum']")[0].value)
+        var roomid = parseInt($("input[name='roomid']")[0].value)
+        var  wildcard =parseInt($("input[name='wildcard']")[0].value)
+        var seat1 = $("input[name='seat1']")[0].value
+        var seat2 = $("input[name='seat2']")[0].value
+        var seat3 = $("input[name='seat3']")[0].value
+        var seat4 = $("input[name='seat4']")[0].value
+        var seat5 = $("input[name='seat5']")[0].value
+
+        var seatArr = [3];
+
+        arr = seat1.split(' ').map(function (data) {
+            return +data
+        })
+        seatArr[0] = filterEmptyStr(arr)
+
+        arr = seat2.split(' ').map(function (data) {
+            return +data
+        })
+        seatArr[1] = filterEmptyStr(arr)
+
+        arr = seat3.split(' ').map(function (data) {
+            return +data
+        })
+        seatArr[2] = filterEmptyStr(arr)
+
+        arr = seat4.split(' ').map(function (data) {
+            return +data
+        })
+        seatArr[3] = filterEmptyStr(arr)
+
+ 
+        var seat5arr = []
+        arr = seat5.split(' ').map(function(data){
+            return +data
+        })
+        seat5arr = filterEmptyStr(arr)
+
+        if (robotnum>3 || robotnum < 0){
+            alert("机器人的数量应该大于等于0小于4")
+            return
+        }
+
+
+        if (wildcard==0){
+            alert("必须填写财神")
+            return
+        }
+
+
+        var body = {
+            roomid: roomid,
+            robot: robotnum,
+            wildcard: wildcard,
+            card: seat5arr,
+            seat: seatArr,
+        }
+
+        console.log(JSON.stringify(body))
+        $.ajax({
+            type: "post",
+            contentType: "application/json",
+            dataType: "json",
+            url: "/create",
+            data: JSON.stringify(body),
+            success: function (data) {
+                alert( data.msg);
+            },
+            error: function (err) {
+                alert("服务器无法连接");
+                console.log(err)
+            }
+        })
+
+    }
+    function autosubmit(ele) {
+        var robotnum = parseInt($("input[name='robotnum']")[0].value)
+        var roomid = parseInt($("input[name='roomid']")[0].value)
+        var  wildcard =parseInt($("input[name='wildcard']")[0].value)
+        var seat1 = $("input[name='seat1']")[0].value
+        var seat2 = $("input[name='seat2']")[0].value
+        var seat3 = $("input[name='seat3']")[0].value
+        var seat4 = $("input[name='seat4']")[0].value
+        var seat5 = $("input[name='seat5']")[0].value
+
+        var seatArr = [3];
+
+        arr = seat1.split(' ').map(function (data) {
+            return +data
+        })
+        seatArr[0] = filterEmptyStr(arr)
+
+        arr = seat2.split(' ').map(function (data) {
+            return +data
+        })
+        seatArr[1] = filterEmptyStr(arr)
+
+        arr = seat3.split(' ').map(function (data) {
+            return +data
+        })
+        seatArr[2] = filterEmptyStr(arr)
+
+        arr = seat4.split(' ').map(function (data) {
+            return +data
+        })
+        seatArr[3] = filterEmptyStr(arr)
+
+
+        var seat5arr = []
+        arr = seat5.split(' ').map(function(data){
+            return +data
+        })
+        seat5arr = filterEmptyStr(arr)
+
+        if (robotnum>3 || robotnum < 0){
+            alert("机器人的数量应该大于等于0小于4")
+            return
+        }
+
+        var body = {
+            roomid: roomid,
+            robot: robotnum,
+            wildcard: wildcard,
+            card: seat5arr,
+            seat: seatArr,
+        }
+
+        console.log(JSON.stringify(body))
+        $.ajax({
+            type: "post",
+            contentType: "application/json",
+            dataType: "json",
+            url: "/autocreate",
+            data: JSON.stringify(body),
+            success: function (data) {
+                alert( data.msg);
+            },
+            error: function (err) {
+                alert("服务器无法连接");
+                console.log(err)
+            }
+        })
+
+    }
+    function createRoom(ele) {
+        $.ajax({
+            type: "get",
+            url: "/create",
+            success: function (data) {
+                console.log(data)
+            },
+            error: function (err) {
+                console.log(err)
+            }
+        })
+    }
+</script>
+</body>
+</html>

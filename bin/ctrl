@@ -1,0 +1,184 @@
+#!/bin/bash
+
+usage() {
+    echo " ./ctrl cmd "
+    echo " cmd : build, build-admin, run, run-admin "
+    echo " cmd : show, sync, kill, run-server, stop "
+    echo " cmd : show-admin, stop-admin run-admin "
+    echo " cmd : show-robot, stop-robot run-robot "
+}
+
+build() {
+    GOPATHOLD=$GOPATH
+    GOPATH=$(cd ../"$(dirname "$0")"; pwd)
+    go build -o server -ldflags "-w -s" ../src/server.go
+    GOPATH=$GOPATHOLD
+}
+
+build_robot() {
+    GOPATHOLD=$GOPATH
+    GOPATH=$(cd ../"$(dirname "$0")"; pwd)
+    go build -o server -ldflags "-w -s" ../src/robot.go
+    GOPATH=$GOPATHOLD
+}
+
+build_admin() {
+    GOPATHOLD=$GOPATH
+    GOPATH=$(cd ../"$(dirname "$0")"; pwd)
+    go build -o admin -ldflags "-w -s" ../src/admin.go
+    GOPATH=$GOPATHOLD
+}
+
+run() {
+    PID=`get_pid`
+    if [ "$PID" != '' ]; then
+	    echo "server already runing PID : $PID"
+    else
+	    nohup ./server -log_dir="log" >/dev/null 2>error.log &
+	    sleep 3s
+	    PID=`get_pid`
+	    echo "runing server PID : $PID"
+    fi
+}
+
+run_admin() {
+    nohup ./admin -log_dir="log" >/dev/null 2>error.log &
+}
+
+run_robot() {
+    PID=`get_pid_robot`
+    if [ "$PID" != '' ]; then
+	    echo "robot already runing PID : $PID"
+    else
+	    nohup ./robot -log_dir="log" >/dev/null 2>&1 &
+	    sleep 3s
+	    PID=`get_pid_robot`
+	    echo "runing robot PID : $PID"
+    fi
+}
+
+show() {
+    ps aux | grep -v grep |  grep './server -log_dir=log'
+}
+
+show_admin() {
+    ps aux | grep -v grep |  grep './admin -log_dir=log'
+}
+
+show_robot() {
+    ps aux | grep -v grep |  grep './robot -log_dir=log'
+}
+
+get_pid() {
+    ps aux | grep -v grep |  grep './server -log_dir=log' | awk '{print $2}'
+}
+
+get_pid_admin() {
+    ps aux | grep -v grep |  grep './admin -log_dir=log' | awk '{print $2}'
+}
+
+get_pid_robot() {
+    ps aux | grep -v grep |  grep './robot -log_dir=log' | awk '{print $2}'
+}
+
+stop() {
+    PID=`get_pid`
+    if [ "$PID" != '' ]; then
+	    #kill -9 $PID
+	    kill -2 $PID
+	    echo "$PID killed!"
+	   
+	    return 1
+    else
+	    echo "stopped"
+	    return 1
+    fi
+}
+
+start() {
+    stop
+    stop_robot
+    sleep 3s
+    show
+    show_robot
+    run
+    run_robot
+}
+
+bb() {
+    build
+    build_robot
+}
+
+stop_admin() {
+    PID=`get_pid_admin`
+    if [ "$PID" != '' ]; then
+	    kill -9 $PID
+	    echo "$PID killed!"
+	    return 1
+    else
+	    echo "stopped"
+	    return 1
+    fi
+}
+
+stop_robot() {
+    PID=`get_pid_robot`
+    if [ "$PID" != '' ]; then
+	    kill -9 $PID
+	    echo "$PID killed!"
+	    return 1
+    else
+	    echo "stopped"
+	    return 1
+    fi
+}
+
+online() {
+    PID=`get_pid`
+    if [ "$PID" != '' ]; then
+	    kill -1 $PID
+	    echo "$PID online!"
+	    return 1
+    else
+	    echo "stopped"
+	    return 1
+    fi
+}
+
+case $1 in
+    build)
+	build;;
+    build-admin)
+	build_admin;;
+    build-robot)
+	build_robot;;
+    run)
+	run;;
+    run-admin)
+	run_admin;;
+    run-robot)
+	run_robot;;
+    show)
+	show;;
+    show-admin)
+	show_admin;;
+    show-robot)
+	show_robot;;
+    sync)
+	sync;;
+    stop)
+	stop;;
+    stop-admin)
+	stop_admin;;
+    stop-robot)
+	stop_robot;;
+    start)
+	start;;
+    bb)
+	bb;;
+    online)
+	online;;
+    *)
+	usage;;
+esac

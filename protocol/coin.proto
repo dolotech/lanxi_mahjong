@@ -1,0 +1,31 @@
+// 约定：首字母为C是客户端请求协议，首字母为S是服务器返回协议，其他为嵌套结构体
+package protocol; 
+// 更新玩家的金币等经济资源，当玩家的经济资源任何时候有变动，服务器主动推送
+message SResource
+{ 
+	optional uint32 code = 1 [default = 5000];//协议号
+	repeated ResVo  list =	2; 
+}
+
+message ResVo
+{
+	required uint32 id= 2;  // 变动的资源唯一ID,一定物品道具表的唯一id,4:房卡
+	required int32 count= 3;  // 变动后的资源数量,即玩家当前资源数量
+
+}
+
+// 获取虚拟货币
+message CGetCurrency
+{ 
+	optional uint32 code = 1 [default = 5001];//协议号
+}
+
+message SGetCurrency
+{ 
+	optional uint32 code     = 1 [default = 5001];//协议号
+	required uint32 coin     = 2;// 金币
+	required uint32 diamond  = 3;//钻石
+	required uint32 exchange = 4;//兑换券
+	required uint32 ticket   = 5;//入场券
+	required uint32 roomcard = 6;//房卡
+}

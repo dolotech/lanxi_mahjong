@@ -1,0 +1,92 @@
+// 约定：首字母为C是客户端请求协议，首字母为S是服务器返回协议，其他为嵌套结构体
+package protocol;
+
+// http登陆获取登录令牌后登录游戏服
+message CHttpLogin {
+    optional uint32 code = 1 [default = 1026]; //协议号
+    required string userid = 2; // 玩家ID
+    required uint32 timestamp = 3; // http登录服返回的时间戳
+    required uint32 createtime =4;//  http登录服返回的注册时间戳
+    required string token = 5; // http登录服返回的登录令牌
+}
+message SHttpLogin {
+    optional uint32 code = 1 [default = 1026]; //协议号
+    required string userid = 3; // 玩家ID
+    optional uint32 error = 4 [default = 0]; // 错误码，0:成功，大于0时参考error.proto里的错误枚举
+}
+
+// 登陆
+message CLogin {
+    optional uint32 code = 1 [default = 1000]; //协议号
+    optional string userid = 2; // 用户账户
+    optional string phone = 3; // 如果已经有userid不会再验证手机
+    required string password = 4; //密码 (MD5)
+}
+message SLogin {
+    optional uint32 code = 1 [default = 1000]; //协议号
+    required string userid = 2; // 用户账户
+    required uint32 unixtime = 3; // 当下服务器系统的Unix时间戳
+    optional uint32 error = 4 [default = 0]; // 错误码
+}
+// 咪咕登陆
+message CMiguLogin {
+    optional uint32 code = 1 [default = 1001]; //协议号
+    optional string sessionkey = 2; //
+}
+message SMiguLogin {
+    optional uint32 code = 1 [default = 1001]; //协议号
+    required string userid = 2; // 用户账户
+    optional uint32 error = 3 [default = 0]; // 错误码
+}
+// 账户重复登录协议
+message ReLogin {
+    optional uint32 code = 1 [default = 1010]; //协议号
+    optional uint32 error = 2 [default = 0]; // 错误码
+}
+
+
+message CRegist {
+    optional uint32 code = 1 [default = 1022]; //协议号
+    optional string nickname = 2; //昵称
+    optional string phone = 3; //手机号
+    required string pwd = 4; //密码
+}
+
+message SRegist {
+    optional uint32 code = 1 [default = 1022]; //协议号
+    optional string userid = 2; // 用户账户
+    optional uint32 error = 3 [default = 0]; // 错误码
+}
+
+// 修改密码
+message CSetPasswd {
+    optional uint32 code = 1 [default = 1023]; //协议号
+    required string pwd = 2; //密码
+}
+message SSetPasswd {
+    optional uint32 code = 1 [default = 1023]; //协议号
+    required uint32 result = 2; // 0成功,1失败
+    optional uint32 error = 3 [default = 0]; // 错误码
+}
+
+//服务器主动断开网络 
+message Sdisconnection {
+    optional uint32 code = 1 [default = 1032]; //协议号
+    optional uint32 error = 2 [default = 0]; // 错误码 ,断网理由
+}
+
+// 微信登录登陆
+message CWechatLogin {
+    optional uint32 code = 1 [default = 1024]; //协议号
+    required string appid = 2; //
+    required string secret = 3; //
+    required string code_id = 4; //
+    required string grant_type = 5; //
+    required string token = 6; // 如果token不为空，则只判断token登录
+}
+message SWechatLogin {
+    optional uint32 code = 1 [default = 1024]; //协议号
+    required string userid = 2; // 用户账户
+    required string token = 3; // 用户账户
+    optional uint32 error = 4 [default = 0]; // 错误码
+}

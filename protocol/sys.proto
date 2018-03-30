@@ -1,0 +1,258 @@
+// 约定：首字母为C是客户端请求协议，首字母为S是服务器返回协议，其他为嵌套结构体
+package protocol; 
+message CPing
+{ 
+	optional uint32 code = 1 [default = 9000];//协议号
+
+}
+
+message SPing
+{ 
+	optional uint32 code = 1 [default = 9000];//协议号
+	optional uint32 error= 2 [default = 0]; // 错误码 ,0:正常
+}
+message CFeedback
+{ 
+	optional uint32 code = 1 [default = 9002];//协议号
+	required string content= 2;  // 
+	required uint32 kind= 3;  //  1:bug，2：建议：3：其他
+
+}
+
+message SFeedback
+{ 
+	optional uint32 code = 1 [default = 9002];//协议号
+	optional uint32 error= 2 [default = 0]; // 错误码 
+}
+
+// 公告
+message CNotice
+{ 
+	optional uint32 code = 1 [default = 9003];//协议号
+}
+
+// 公告
+message SNotice
+{ 
+	optional uint32 code   = 1 [default = 9003];//协议号
+	repeated Notice list   = 2;  // 公告列表
+	optional uint32 error  = 3 [default = 0]; // 错误码 
+}
+
+// 公告
+message Notice
+{ 
+	optional uint32 id     = 1;  // ID
+	required uint32 type   = 2;  // 类型 
+	required string title  = 3;  // 标题
+	required string content= 4;  // 内容
+	required uint32 time   = 5;  // 时间
+}
+
+// 商城
+message CBuy
+{
+	optional uint32 code = 1 [default = 9006];//协议号
+	required uint32 id = 2;  //  购买ID
+}
+
+message SBuy
+{
+	optional uint32 code = 1 [default = 9006];//协议号
+	required uint32 result = 2;  // 0购买成功,1失败
+	optional uint32 error= 3 [default = 0]; // 错误码
+}
+
+// 绑定玩家id
+message CBuild
+{
+	optional uint32 code = 1 [default = 9007];//协议号
+	required string id   = 2;  //玩家ID
+}
+
+message SBuild
+{
+	optional uint32 code = 1 [default = 9007];//协议号
+	required uint32 result = 2;//0成功,1不能绑定自己,2已经绑定,3不合格id,4不能绑定下级自己,5代理商不存在
+	optional uint32 error= 3 [default = 0]; // 错误码
+}
+
+// 获取活动列表
+message CActivity
+{
+	optional uint32 code = 1 [default = 9010];//协议号
+}
+
+message ProtoActivity
+{
+	required uint32 id        = 1;  // 活动ID
+	required uint32 type      = 2;  // 活动类型 1:邀请活动
+	required uint32 count     = 3;  // 活动完成进度
+	required uint32 rewards   = 4;  // 0没领取1已领取
+	required uint32 starttime = 5;  // 活动开始时间
+	required uint32 endtime   = 6;  // 活动结束时间
+}
+
+message SActivity
+{
+	optional uint32 code       = 1 [default = 9010];//协议号
+	repeated ProtoActivity list= 2;  //
+	optional uint32 error      = 3 [default = 0]; // 错误码
+}
+
+// 活动领奖
+message CGetActivityRewards
+{
+	optional uint32 code = 1 [default = 9011];//协议号
+	required uint32 id   = 2;  //  活动id
+}
+
+message SGetActivityRewards
+{
+	optional uint32 code = 1 [default = 9011];//协议号
+	optional uint32 error= 2 [default = 0]; // 错误码
+}
+
+// 更新活动
+message SUpdateActivity
+{
+	optional uint32 code        = 1 [default = 9012];//协议号
+	repeated ProtoActivity list = 2;  //
+}
+
+// 分享邀请好友活动
+message CWechatShare
+{
+	optional uint32 code = 1 [default = 9013];//协议号
+}
+
+// 兑换
+message CTradeList
+{
+	optional uint32 code = 1 [default = 9020];//协议号
+}
+
+message STradeList
+{
+	optional uint32 code       = 1 [default = 9020];//协议号
+	repeated ProtoTrade list   = 2;  //
+	optional uint32 error      = 3 [default = 0]; // 错误码
+}
+
+message ProtoTrade
+{
+	required uint32 id        = 1;  // 兑换ID
+	required uint32 count     = 2;  // 剩余兑换量
+}
+
+message CTradeRecord
+{
+	optional uint32 code = 1 [default = 9021];//协议号
+}
+
+message STradeRecord
+{
+	optional uint32 code            = 1 [default = 9021];//协议号
+	repeated ProtoTradeRecard list  = 2;  //
+	optional uint32 error           = 3 [default = 0]; // 错误码
+}
+
+message ProtoTradeRecard
+{
+	required uint32 id        = 1;  // 兑换ID
+	required uint32 time      = 2;  // 兑换时间
+}
+
+message CTradeUserInfo
+{
+	optional uint32 code      = 1 [default = 9022];//协议号
+	required string name      = 2;  // 真实姓名
+	required string phone     = 3;  // 手机号码
+	required string address   = 4;  // 联络地址
+}
+
+message STradeUserInfo
+{
+	optional uint32 code      = 1 [default = 9022];//协议号
+	required string name      = 2;  // 真实姓名
+	required string phone     = 3;  // 手机号码
+	required string address   = 4;  // 联络地址
+	optional uint32 error     = 5 [default = 0]; // 错误码
+}
+
+message CTrade
+{
+	optional uint32 code      = 1 [default = 9023];//协议号
+	required uint32 id        = 2;  // 兑换ID
+}
+
+message STrade
+{
+	optional uint32 code       = 1 [default = 9023];//协议号
+	required uint32 result     = 2;  // 0成功,1失败
+	required uint32 id         = 3;  // 兑换ID
+	optional uint32 error      = 4 [default = 0]; // 错误码
+}
+
+// 爱贝支付 - 下单
+message CIapppayOrder
+{
+	optional uint32 code      = 1 [default = 9050];//协议号
+	required uint32 id        = 2;  // 购买商品ID
+}
+
+message SIapppayOrder
+{
+	optional uint32 code       = 1 [default = 9050];//协议号
+	required string transid    = 2;  // 交易流水号
+	required uint32 id         = 3;  // 购买商品ID
+	optional uint32 error      = 4 [default = 0]; // 错误码
+}
+
+//  苹果支付
+message CApplePay
+{
+	optional uint32 code      = 1 [default = 9052];//协议号
+	required uint32 id        = 2;  // 购买商品ID
+	required string receipt= 3;  //客户端提交上来的苹果支付验证数据
+}
+
+message SApplePay
+{
+	optional uint32 code       = 1 [default = 9052];//协议号
+	required uint32 id         = 2;  // 购买商品ID
+	optional uint32 error      = 3 [default = 0]; // 错误码
+}
+
+// 微信支付 - 下单
+message CWxpayOrder
+{
+	optional uint32 code      = 1 [default = 9053];//协议号
+	required uint32 id        = 2;  // 购买商品ID
+	required string body      = 3;  // 购买商品描述
+}
+
+message SWxpayOrder
+{
+	optional uint32 code       = 1 [default = 9053];//协议号
+	required uint32 id         = 2;  // 购买商品ID
+	required string payreq     = 3;  // 调起支付接口请求参数
+	required string orderid    = 4;  // 订单号
+	required string noncestr   = 5;  // 随机码
+	optional uint32 error      = 6 [default = 0]; // 错误码
+}
+
+// 微信支付 - 查询
+message CWxpayQuery
+{
+       optional uint32 code      = 1 [default = 9054];//协议号
+       required string transid   = 2;  // 微信订单号
+}
+
+message SWxpayQuery
+{
+       optional uint32 code       = 1 [default = 9054];//协议号
+       required string orderid    = 2;  // 订单号
+       required uint32 result     = 3;  // 0支付成功,1发货中,2订单号不存在,3支付失败
+       optional uint32 error      = 4 [default = 0]; // 错误码
+}

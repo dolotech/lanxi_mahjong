@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>$Title$</title>
+</head>
+<body>
+<div id="main" style="width:600px; height: 500px" >
+
+</div>
+</body>
+
+
+<script src="script/echarts.min.js" ></script>
+<script src="script/jquery-3.2.0.min.js"></script>
+<script>
+
+    var myChart = echarts.init(document.getElementById('main'));
+    var option;
+    function draw(x,y) {
+        option = {
+            title: {      //标题组件
+                text: '内存使用'
+            },
+            tooltip: {    //提示框组件
+                trigger: 'axis'
+            },
+
+            legend: {     //图例组件
+                data: ['内存使用']
+            },
+
+            grid: {       //直角坐标系内绘图网格
+
+                ontainLabel: true
+
+            },
+
+            toolbox: {     //工具栏
+                feature: {
+                    saveAsImage: {}
+                }
+
+            },
+            xAxis: {       //直角坐标系 grid 中的 x 轴
+                type: 'category',
+                boundaryGap: false,
+                data: x,
+            },
+
+            yAxis: {       //直角坐标系 grid 中的 y 轴
+                type: 'value'
+
+            },
+
+            series: [      //系列列表
+                {
+                    name: '内存使用',
+                    type: 'line',
+                    stack: '使用',
+                    data: y,
+                    markLine:{
+                        data:[{
+                            type:'average',
+                            name:'平均值'
+                        }]
+                    },
+                    markPoint:{
+                        data:[
+                            {type:'max',name:'da'},
+                            {type:"min",name:'small'}
+                            ]
+                    }
+                }
+
+            ]
+        }
+    }
+
+    var times = [];
+    var ys = [];
+    var socket = new WebSocket("ws://localhost:7229/charts/data");
+    socket.onopen = function (event) {
+        socket.onmessage = function (event) {
+            var  data =  JSON.parse(event.data);
+          times.push(data.time);
+          ys.push(data.data.AppInfo.Mem.Alloc/ 1024/1024);
+          draw(times,ys);
+            myChart.setOption(option);   //参数设置方法
+        }
+    }
+</script>
+</html>

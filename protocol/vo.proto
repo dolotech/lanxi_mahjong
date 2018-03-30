@@ -1,0 +1,174 @@
+// 约定：首字母为C是客户端请求协议，首字母为S是服务器返回协议，其他为嵌套结构体
+package protocol;
+
+// 客户端登录时提交到逻辑服的玩家信息
+message LoginData {
+    required string userid = 1; //玩家账号
+    required string nickname = 2; //昵称
+    required uint32 sex = 3; //用户性别,男1 女2 非男非女3
+    required string photo = 4; //头像
+    required uint32 roomcard = 5; // 房卡
+    required string parent = 6; //  父代理商id
+    required uint32 timestamp = 7; // 登陆服设定的时间戳
+    required string token = 8; //  登录服协定的验证令牌
+}
+
+// 玩家的详细数据
+message UserData {
+    required string userid = 1; //用户账号
+    required string nickname = 2; //昵称
+    required string email = 3; //邮箱地址
+    required string phone = 4; //电话号码
+    required uint32 sex = 5; //用户性别,男1 女2 非男非女3
+    required uint32 status = 6; //屏蔽状态(正常1  锁定2  黑名单3)
+    required bool online = 7; //
+    required uint32 exp = 8; //经验
+    required uint32 ip = 9; //注册IP地址(字节表示)
+    required string photo = 10; //头像
+    required string address = 11; //真实物理地址
+    required uint32 createtime = 12; //注册时间(unix 时间戳)
+    required string sign = 13; //签名
+    required uint32 birth = 14; // 生日日期(unix 时间戳)
+    required string terminal = 15; //
+    required uint32 coin = 16; //
+    required uint32 roomtype = 18; // 如果玩家已经在房间里打牌，就是房间表房间类型id，否则为0
+    required uint32 roomid = 19; // 所在普通场或者比赛场，就是房间号，不在房间为0
+    required string invitecode = 20; // 所在私人房间就是私人房邀请码，不在房间为""
+    required uint32 diamond = 21; //钻石
+    required uint32 exchange = 22; //兑换券
+    required uint32 ticket = 23; // 入场券
+    required uint32 vip = 24; // vip
+    required uint32 win = 25; // 输的局数
+    required uint32 lost = 26; //  赢的局数
+    required uint32 ping = 27; //  平局数
+    required uint32 platform = 28; //  登录平台0：手机登录，1：微信登录
+    required uint32 rupt = 29; //  破产领取补助次数
+    required bool sound = 30; //  是否购买语音
+    required uint32 roomcard = 31; // 房卡
+    required string build = 32; //  绑定id
+    required string token = 33; //  登录服协定的验证令牌
+}
+//  玩家的基础数据
+message ProtoUser {
+    required string userid = 1; //用户账号
+    required string nickname = 2; //昵称
+    required string email = 3; //邮箱地址
+    required uint32 position = 4; //座位号
+    required uint32 sex = 5; //用户性别,男1 女2 非男非女3
+    required uint32 exp = 6; //经验
+    required string photo = 7; //头像
+    required string address = 8; //真实物理地址
+    required string sign = 9; //签名
+    required string terminal = 10; // 终端类型
+    required uint32 coin = 11; // 金币
+    required uint32 roomcard = 12; // 房卡
+    required uint32 exchange = 13; //兑换券
+    required bool ready = 14; //玩家de准备状态
+    required uint32 vip = 15; // vip
+    required uint32 win = 16; // 输的局数
+    required uint32 lost = 17; //  赢的局数
+    required uint32 ping = 18; //  平局数
+    required uint32 ting = 19; //  天听&地听状态(掩码)
+    required uint32 platform = 20; //  登录平台0：手机登录，1：微信登录
+    required int32 score = 21; // 私人局积分
+    required int32 maizi = 22; // 玩家的买子数
+    required string ip = 23; // 玩家IP地址
+    required bool offline = 24; // 玩家离线状态       true:离线,false:上线
+    required string longitude  = 26; // 经度
+    required string latitude  = 27; // 纬度
+}
+
+
+//房间数据(后面要和ProtoRoom合并)
+message RoomAttrube {
+    required uint32 rtype = 1; //id
+    required uint32 ante = 2; //牌局设定的底注
+    required uint32 maxcount = 3; //房间人数上限
+    required uint32 percent = 4; //一场牌局抽水金币数量
+    required uint32 access = 5; //准入金币
+    required uint32 private = 6; //是否 私人场
+}
+message RoomData {
+    required uint32 roomid = 1; //牌局id
+    required uint32 rtype = 2; //id
+    required string rname = 3; // 牌局名称(牌局名称不能重复)
+    required uint32 expire = 4; //牌局设定的时间（牌局存在的时间）
+    required uint32 count = 5; // 当前房间里玩家数量
+    required uint32 cid = 6; // 本房间属于那个圈子
+    required string invitecode = 7; // 房间邀请码  私人牌局都有邀请码,邀请码是唯一的
+    required uint32 audience = 8; // 是否允许旁观,如果不允许旁观,则房间允许进入玩家数量固定为4个
+    required uint32 pub = 9; // 是否同圈公开
+    required bool maizi = 10; // 是否买子
+    required uint32 horse = 11; // 是否玩家可以买码
+    required uint32 zhuang = 12; // 是否玩家可以买码
+    required uint32 round = 13; // 剩余牌局数
+    required string userid = 14; // 房主ID
+    required uint32 ma = 15; //马的数量双数(0-8)
+    required uint32 lian = 16; // 连庄数
+    required uint32 totalround = 17; // 房间总局数
+}
+// 房间数据结构
+message ProtoRoom {
+    required uint32 ante = 1; //底注
+    required uint32 roomid = 2; //房间id
+    required uint32 zhuang = 3; //庄
+}
+
+message PrivateRecordForCircle {
+    required uint32 rid = 1; //房间id
+    required string rname = 2; //房间名字
+    required uint32 time = 3; //牌局时间
+    required uint32 rtype = 4; // 房间的类型
+    required int32 coin = 5; // 自己的输赢结果
+}
+message PrivateRecordForRoom {
+    required string uname = 1; // 玩家名字
+    required string photo = 2; // 玩家 头像
+    required int32 coin = 3; // 玩家的输赢结果
+}
+
+//明杠  MING_KONG uint32 = 2 << 1
+//暗杠	AN_KONG   uint32 = 2 << 2
+//补杠 	BU_KONG   uint32 = 2 << 3
+message ProtoCard {
+    repeated uint32 peng = 1; // 最高字节为被碰牌玩家座位号，第二字节为碰牌值
+    repeated uint32 kong = 2; // 最高字节为放杠玩家的座位(1-4)，非明杠则为0，第二字节为杠牌值，第三个字节为杠类型（暗杠／明杠／补杠）最低字节保留
+    required bytes outcards = 3; //每个玩家跟前的海底牌
+    required uint32 seat = 4; //玩家的座位
+    repeated uint32 chow = 5; //吃牌数据,24bit表示,8bit表示一个牌值,低位表示被吃的牌
+}
+// 结算数据
+message ProtoCount {
+    required uint32 seat = 1; //玩家座位号
+    required bytes cards = 2; // 玩家手牌
+    required int64 hu = 3; // 胡牌类型，是个掩码值,值为0时不胡牌
+    required int32 huTypeFan = 4; // 胡牌方式番数(比如:热炮,杠上开花,杀报等等方式胡牌时额外的番数)
+    required int32 huFan = 5; // 胡牌牌型番数(仅针对胡牌牌型的番数)
+    required int32 maizi = 7; // 买子数
+    required int32 total = 8; // 总番数,总番=胡牌牌型番值*马的番值
+    required int32 coin = 9; // 输赢金币数量
+}
+// 邮箱数据
+message PostBoxData {
+    required string title = 1; //  邮件标题
+    required string content = 2; // 邮件内容
+    required string appendixname = 3; // 附件id
+    required uint32 expire = 4; // 过期时间戳 (unix时间戳)
+    required string sendername = 5; //发件人名字
+    required string senderuserid = 6; //发件人用户 id
+    required bool read = 7; // 是否已读
+    required bool draw = 8; // 附件是否已领取
+    required uint32 kind = 9; // 邮件类型 1：系统公告 2：圈子消息  3:奖励
+    required uint32 id = 10; // 邮件id
+}
+// 邮箱附件数据
+message PostAppendixData {
+    required uint32 postid = 1; //所属邮件 id
+    required string name = 2; //附件 名字
+    repeated WidgetData widgets = 3; // 附件物品
+}
+// 道具数据
+message WidgetData {
+    required uint32 id = 1; // 道具id
+    required uint32 count = 2; //道具数量
+}

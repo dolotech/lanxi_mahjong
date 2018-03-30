@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>测试的</title>
+    <style>
+        table,table tr th, table tr td { border:1px solid #cccccc; }
+    </style>
+</head>
+<body>
+
+<h2>系统信息</h2>
+<div id="statics">
+
+
+
+</div>
+
+<h2>打牌统计</h2>
+<div id="countInfo">
+
+</div>
+
+<div id="respInfo"  >
+
+</div>
+
+<h2>操作</h2>
+<div id="process">
+    <h3>约局</h3>
+    添加房间: <input type="text" id="addRobotNum">局数:8/房间<input type="button" id="addrobot" value="确定"> </br>
+    添加一直打牌的房间:<input type="text" id="addRepeatRoomsNum">局数:8/房间 <input type="button" id="addRepeatRooms" value="确定">  <input type="button" id="stop" value="关">
+    断线人数:<input type="text" id="deadLineNum"> <input type="button" id="deadLineBu" value="确定"><label id="deadRespMsg"></label> <br>
+    <!--<input type="button" value="复位统计信息" id="reset"> <br>-->
+    <h3>比赛</h3>
+    比赛id: <input type="text" id="contextId"> 报名人数: <input type="text" id="signNum" > <input type="button" value="确定" id="contest"> <br>
+
+    <h3>查询</h3>
+    输入房间号:<input type="text" id="inviteCode"> <input type="button" id="searchRoom" value="查询"> <br>
+    <div id="roomInfo">
+
+    </div>
+
+    <div>
+        client状态：
+        <select id="clientstatus">
+            <option value="4" >邀请</option>
+            <option value="1" >大厅</option>
+            <option value="3" >房间</option>
+            <option value="2">登陆</option>
+            <option value="5">结束</option>
+        </select>
+        <input type="button" id="showClient" value="查询">
+        <!--<input type="button" value="查看未完成游戏的用户id" id="noExitList">-->
+        输入用户id:<input type="text" id="userIdText">  <input type="button" id="searchUser" value="查询"><br>
+        <div id="userList">
+
+        </div>
+        <div id="userInfo">
+
+        </div>
+        超时时间:<input type="text" id="second" >(s) <input type="button" id="timeout" value="查询"> <br>
+        <div id="timeoutcontent">
+
+        </div>
+
+
+    </div>
+
+
+</div>
+<div id="responseDiv" style="width:100%; height: 500px" >
+
+</div>
+<div id="sizeDiv" style="width:100%; height: 500px" >
+
+</div>
+
+
+</body>
+<script type="text/javascript" src="https://code.jquery.com/jquery-3.0.0.min.js"></script>
+<script type="text/javascript" src="/assets/script/echarts.min.js"></script>
+<script type="text/javascript" src="/assets/script/response_charts.js" ></script>
+<script type="text/javascript">
+
+    function loadStaticInfo() {
+        $.ajax({
+            url:"/statics",
+            type:"json",
+            success:function (data) {
+                data = JSON.parse(data)
+                $("#statics").html(
+                    "协程数:"+data.AppInfo.GoroutineNum+"<br>" +
+                    "累积分配内存:"+data.AppInfo.Mem.TotalAlloc / 1024 /1024 + "mb" + "<br>" +
+                    "分配内存:" +data.AppInfo.Mem.Alloc / 1024 /1024 +"mb <br>" +
+                    "cpu使用率:"  + data.Host.CPU +"% <br>" +
+                    "内存使用" +data.Host.Memory +"<br>"
+                )
+
+            }
+        })
+    }
+    $("#contest").click(function(){
+        $.ajax({
+            url:"/contest?num=" + $("#signNum").val()+"&&contestId=" + $("#contextId").val(),
+            success:function(data) {
+
+
+            }})
+
+    })
+
+
+    function loadCountInfo() {
+        $.ajax({
+            url:"/countInfo",
+            method:"GET",
+            success:function (data) {
+                $("#countInfo").html(data )
+            }
+        })
+    }
+
+    function loadTimeInfo() {
+        $.ajax({
+            url:"/rs" ,
+            success:function(data) {
+                data = JSON.parse(data);
+                var str = "";
+                str += "<table>"
+                str += "<tr>";
+                str += "<td>  操作 </td>";
+                str += "<td>总时间(ms)</td>"
+                str += "<td>" +  "平均时间(ms)</td>";
+                str += "<td> 最大响应时间(ms)</td>";
+                str += "<td> 最小响应时间(ms)</td>";
+                str += "<td> 次数(个)</td>";
+                str += "</tr>";
+                for(key in data) {
+                    str += "<tr>";
+                    str += "<td>" +  key +"</td>";
+                    str += "<td>" +  data[key].Time   + " ms"+"</td>";
+                    str += "<td>" +  data[key].average.toFixed(2)   + " ms"+"</td>";
+                    str += "<td>" +  data[key].MaxTime   +"  ms</td>";
+                    str += "<td>" +  data[key].MinTime   +"  ms</td>";
+                    str += "<td>" +  data[key].size   +"</td>";
+                    str += "</tr>";
+                }
+                str += "</table>"
+                $("#respInfo").html(str);
+            }
+        })
+    }
+
+    function logFormat(data,uid) {
+        var str = "<br>" + uid + "房间号:" + data.InviteCode + " :<br>";
+
+        str += "<table>"
+        str += "<tr>";
+        str += "<td>" + "process" +"</td>";
+        str += "<td>req_time</td>";
+        str += "<td>" + "req_msq" +"</td>";
+        str += "<td>" + "resptime" +"</td>";
+        str += "<td>" + "only" +"</td>";
+        str += "<td>" + "respose_msg" +"</td>";
+        str += "<td>" + "errcode" +"</td>";
+        str += "<td>" + "poird" +"</td>";
+        str += "</tr>";
+        for (var j = 0; j < data.log.length; j++) {
+            if (data.log[j] == null ) {
+                continue;
+            }
+            str += "<tr>";
+            str += "<td>" + data.log[j].ProcessStr +"</td>";
+            str += "<td>" + data.log[j].ReqTimeStr +"</td>";
+            str += "<td>" + data.log[j].ReqMsg +"</td>";
+            str += "<td>" + data.log[j].RespTimeStr +"</td>";
+            str += "<td>" + data.log[j].OnlyOne  +"</td>";
+            str += "<td>" + data.log[j].RespMsg +"</td>";
+            str += "<td>" + data.log[j].RespErrCode +"</td>";
+            str += "<td>" + data.log[j].Time / 1000000   +"ms </td>";
+            str += "</tr>";
+        }
+        str += "</table>"
+        return str;
+    }
+
+    $(document).ready(function()  {
+        setInterval(function(){
+            loadStaticInfo();
+            loadTimeInfo();
+            loadCountInfo()},2000);
+
+        $("#showClient").click(function(){
+            $.ajax({
+                url:"/showClient?status="+ $("#clientstatus").val(),
+                success:function(data) {
+
+                    $("#userList").html(data);
+                }
+            })
+        })
+
+        $("#deadLineBu").click(function(){
+            $.ajax({
+                url:"/deadline?num=" + $("#deadLineNum").val(),
+                success:function(data) {
+                    $("#deadRespMsg").html(data);
+                    setInterval(function() {
+                        $("#deadRespMsg").html("")
+                    },5000);
+
+                }})
+
+        })
+
+
+        $("#searchUser").click(function(){
+            $.ajax({
+                url:"/userLog?id=" + $("#userIdText").val()+"&&errCode=" + $("#errCode").val(),
+                success:function(data) {
+                    data = JSON.parse(data);
+                    var str = "";
+                    var slice = data.data ;
+
+                    if(slice.length == 0) {
+                        return;
+                    }
+                     str += logFormat(slice[0],$("#userIdText").val())
+
+
+
+                    $("#userInfo").html(str)
+                }
+            })
+        })
+
+        $("#addrobot").click(function () {
+            $.ajax({
+                    url:"/addrobot?num="+$("#addRobotNum").val(),
+                    method:"POST",
+                    success:function (data) {
+
+                    }
+                }
+            )
+        });
+
+        $("#timeout").click(function () {
+            $.ajax({
+                url:"/timeoutList?second=" + $("#second").val(),
+                method:"GET",
+                success:function (data) {
+                    $("#timeoutcontent").html(data);
+                }
+            })
+        })
+
+
+        $("#stop").click(function () {
+
+            $.ajax({
+                url: "/stop?kai=" + ($("#stop").val() == "开").toString(),
+                method: "POST",
+                success: function () {
+                    if ($("#stop").val() == "停止打牌") {
+                        $("#stop").val("开")
+                    }else {
+                        $("#stop").val("停止打牌")
+                    }
+                }
+            })
+
+        })
+        $("#addRepeatRooms").click(function () {
+            $.ajax({
+                    url:"/repeatRooms?num="+$("#addRepeatRoomsNum").val(),
+                    method:"POST",
+                    success:function (data) {
+
+                    }
+                }
+            )
+        });
+
+        $("#searchRoom").click(function () {
+            $.ajax({
+                    url: "/roomInfo?inviteCode=" + $("#inviteCode").val(),
+                    method: "GET",
+                    success: function (data) {
+                        data = JSON.parse(data);
+                        data = data.data;
+                        var str = ""
+                        for (var i in data.Player ){
+                            str += "玩家uid:"+data.Player[i].Uid +",玩家的seat:" + data.Player[i].Seat +",打牌量:"+data.Player[i].TotalRound + ",isOwner:"+data.Player[i].IsOwner+"<br>"
+                            str += data.Player[i].LocalAddr+"<br>"
+                            str += logFormat(data.Player[i],data.Player[i].Uid);
+                            str += "---------------------------------------------------------------<br><br><br>"
+                        }
+                        $("#roomInfo").html(str);
+                    }
+                }
+            )
+        });
+
+    });
+
+</script>
+
+
+</html>

@@ -1,0 +1,56 @@
+// 约定：首字母为C是客户端请求协议，首字母为S是服务器返回协议，其他为嵌套结构体
+package protocol;
+
+// 错误码，用于客户端请求错误提示
+
+enum Error {
+    UsernameOrPwdError = 13009; // 用户名或者密码错误
+    UsernameEmpty = 13010; // 用户名为空
+    RegistError = 13012; // 注册失败
+    PwdEmpty = 13011; // 密码为空
+    PhoneRegisted = 13016; // 手机已经注册
+    PhoneNumberError = 13017; // 不是手机号码
+    PwdFormatError = 13018; // // 验证只能由数字字母下划线组成的5-17位密码字符串
+    PhoneNumberEnpty = 13019; // // 电话号码为空
+    UserDataNotExist = 14001; // 用户数据不存在
+    WechatLoingFailReAuth = 14003; // 微信登录失败，请重新授权
+    GetWechatUserInfoFail = 14004; // 获取微信用户数据失败
+
+    HTTP_LOGIN_EXPIRE = 14006; // 登录令牌过期
+    HTTP_LOGIN_TOKEN_FAIL = 14007; // 令牌校验失败
+    HTTP_LOGIN_USERDATA_NIL = 14008; // 提交的玩家数据为空
+    HTTP_LOGIN_USERID_NIL = 14009; // 提交的玩家id为空
+    HTTP_LOGIN_USER_NOT_REGIST = 14010; // 玩家id为注册
+
+    NotInRoomCannotLeave = 20002; // 不在房间，没有离开房间这一说
+    GameStartedCannotLeave = 20001; // 正在牌局中不能离开
+    NotYourTurn = 20003; // 没轮到你打牌
+    BuyAlready = 20004; // 你已经买过子，不能重复买子
+    NoOperate = 20005; // 你没有吃、碰、杠、胡不能操作
+    NoStarted = 20006; // 牌局未开始
+    GameRoundIllegal = 20008; //  牌局数非法
+    GameMaiziIllegal = 20009; // 买子值非法
+    CardValueZero = 20007; // 牌值为0
+
+    NotInRoom = 20018; // 你不在房间,针对房间的一切操作无效
+    NotEnoughCoin = 20019; // 金币不足
+    StartedNotKick = 20023; // 已经开始游戏不能踢人
+    CreateRoomFail = 30012; //创建房间失败
+    RoomNotExist = 30016; //房间不存在
+    RoomFull = 30018; //房间已满
+    NotInPrivateRoom = 30019; //玩家不在私人房间
+    RunningNotVote = 30032; //牌局已经开始不能投票
+    VotingCantLaunchVote = 30033; //房间里已经有玩家发起投票了
+    NotVoteTime = 30034; //先有人发起才能投票
+    NameTooLong = 40002; //取名太长了
+    SexValueRangeout = 40004; //性别取值错误
+    FeedfackError = 40005; //反馈失败
+    NotEnough_ROOM_CARD = 40007; //房卡不足
+    NoticeListEnpty = 40008; //没有公告
+    DataOutOfRange = 40009; //数据超出范围
+    IpayOrderFail = 62001; // 支付下单失败
+    PostboxEmpty = 69001; // 你的邮箱没有邮件
+    PostNotExist = 69002; // 邮件不存在
+    AppendixNotExist = 69003; // 邮件没有附件
+    PrivateRecordEmpty = 68004; // 没有私人局记录
+}

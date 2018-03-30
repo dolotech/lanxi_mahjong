@@ -1,0 +1,175 @@
+<title>游戏数据调试工具</title>
+</head>
+
+</div>
+<div id="CodeArea">
+
+
+    <label><h2>房间号：</h2></label><input type="text" id="roomid" value=""/>
+    <div id="butt">
+        <input type="button" value="打印房间信息" onclick="submit(this)">
+    </div>
+
+
+    <h2>房间数据：</h2>
+    <textarea id="roominfo" rows="50" cols="200" style="overflow-y:auto"> 无
+</textarea>
+</div>
+
+</div>
+<script type="text/javascript" src="/script/jquery-3.2.0.min.js">
+</script>
+
+
+<script type="text/javascript">
+
+    function getLocalTime(nS) {
+        return new Date(parseInt(nS) * 1000).toLocaleString().replace(/:\d{1,2}$/, ' ');
+    }
+
+    function submit(ele) {
+        var roomid = parseInt($("#roomid").val())
+        console.log(roomid)
+
+        var body = {
+            roomid: roomid,
+        }
+
+        $.ajax({
+            type: "post",
+            contentType: "application/json",
+            dataType: "json",
+            url: "/printroominfo",
+            data: JSON.stringify(body),
+            success: function (data) {
+                if (data.msg) {
+                    alert(data.msg)
+                    return
+                }
+
+                data = JSON.parse(data.data)
+                var result = "房间号：" + data.roomid + "\n"
+                result = result + "庄家座位：" + data.dealer + "\n"
+                result = result + "房间创建人：" + data.data.Cid + "\n"
+                result = result + "底分：" + data.data.Ante + "\n"
+                result = result + "是否买子：" + data.data.MaiZi + "\n"
+
+                result = result + "骰子：" + data.dice + "\n"
+                result = result + "连庄数：" + data.lianCount + "\n"
+                result = result + "总局数：" + data.data.Round + "\n"
+                result = result + "已经完成的局数：" + data.round + "\n"
+                result = result + "最后出牌牌值：" + data.discard.toString(16) + "\n"
+                result = result + "最后摸牌牌值：" + data.draw.toString(16) + "\n"
+                result = result + "当前摸牌|出牌座位：" + data.seat + "\n"
+                result = result + "操作状态：" + data.operate + "\n"
+                result = result + "财神牌值：" + data.luckyCard.toString(16) + "\n"
+
+                result = result + "房间创建时间：" + getLocalTime(data.data.CTime) + "\n"
+
+                result = result + "房间过期时间：" + getLocalTime(data.data.Expire) + "\n"
+                result = result + "\n"
+                if (data.opt) {
+                    for (var i =1;i<=4;i++){
+                        result = result + "玩家"+i+"吃碰杠胡掩码："
+                        if (data.opt[i]){
+                            result = result + data.opt[i].toString(2) + "\n"
+                        }
+                        result = result + "\n"
+                    }
+                }
+                result = result + "\n"
+                result = result + "玩家id：1:" + data.ids[1] + " 2:" + data.ids[2] + " 3:" + data.ids[3] + " 4:" + data.ids[4] + "\n"
+                result = result + "玩家房卡：1:" + data.roomcards[1] + " 2:" + data.roomcards[2] + " 3:" + data.roomcards[3] + " 4:" + data.roomcards[4] + "\n"
+                result = result + "玩家积分：1:" + data.data.Score[data.ids[1]] + " 2:" + data.data.Score[data.ids[2]] + " 3:" + data.data.Score[data.ids[3]] + " 4:" + data.data.Score[data.ids[4]] + "\n"
+                result = result + "离线状态：1:" + data.offline[1] + " 2:" + data.offline[2] + " 3:" + data.offline[3] + " 4:" + data.offline[4] + "\n"
+                result = result + "买子状态：1:" + data.maizi[1] + " 2:" + data.maizi[2] + " 3:" + data.maizi[3] + " 4:" + data.maizi[4] + "\n"
+                result = result + "\n"
+                if (data.cards && data.cards.length > 0) {
+                    result = result + "牌墙：" + hexToString(data.cards) + "\n"
+                }
+                if (data.handCards) {
+                    for (var i =1;i<=4;i++){
+                        result = result + "玩家"+i+"手牌：" + hexToString(data.handCards[i]) + "\n"
+                    }
+                    result = result + "\n"
+                }
+
+                if (data.outCards) {
+                    for (var i =1;i<=4;i++){
+                        result = result + "玩家"+i+"打出的牌：" + hexToString(data.outCards[i]) + "\n"
+                    }
+                    result = result + "\n"
+                }
+
+                if (data.kongCards) {
+                    for (var k =1;k<=4;k++){
+                        result = result + "玩家"+k+"杠牌："
+                        if (data.kongCards[k]) {
+                            for (var i = 0; i < data.kongCards[k].length; i++) {
+                                var str = data.kongCards[k][i]
+                                result = result + "["
+                                result = result + "value:" + (str >> 16).toString(2) + "　seat:" + ((str >> 8) & 0xFF) + " card:" + (str & 0xFF).toString(16)
+                                result = result + "]"
+                            }
+                        }
+                        result = result + "\n"
+                    }
+                }
+
+                result = result + "\n"
+                if (data.pongCards) {
+                    for (var k =1;k<=4;k++){
+                        result = result + "玩家"+k+"碰牌："
+                        if (data.pongCards[k]) {
+                            for (var i = 0; i < data.pongCards[k].length; i++) {
+                                var str = data.pongCards[k][i]
+                                result = result + "["
+                                result = result + ("放碰的座位:" + ((str >> 8) & 0xFF ) + " 牌值:" + (str & 0xFF).toString(16))
+                                result = result + "]"
+                            }
+                        }
+                        result = result + "\n"
+                    }
+                }
+
+                result = result + "\n"
+                if (data.chowCards) {
+
+                    for (var k =1;k<=4;k++){
+                        result = result + "玩家"+k+"吃牌："
+                        if (data.chowCards[k]) {
+                            for (var i = 0; i < data.chowCards[k].length; i++) {
+                                var str = data.chowCards[k][i]
+                                result = result + "["
+                                result = result + ("牌值:" + (str & 0xFF).toString(16) + "," + (str >> 8 & 0xFF).toString(16) + "," + (str >> 16).toString(16))
+                                result = result + "]"
+                            }
+                        }
+                        result = result + "\n"
+                    }
+                    result = result + "\n"
+                }
+
+                $("#roominfo").text(result)
+            },
+            error: function (err) {
+                alert("服务器无法连接");
+                console.log(err)
+            }
+        })
+    }
+
+    function hexToString(arr) {
+        var val = "";
+        if (arr) {
+            for (var i = 0; i < arr.length; i++) {
+                val += arr[i].toString(16)
+                if (i < arr.length - 1) {
+                    val = val + ","
+                }
+            }
+        }
+        return val;
+    }
+</script>
+</html>

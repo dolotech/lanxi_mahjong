@@ -1,0 +1,76 @@
+// 约定：首字母为C是客户端请求协议，首字母为S是服务器返回协议，其他为嵌套结构体
+// 全局属性
+package protocol; 
+import "vo.proto";
+// 更改用户名
+message CChangeNickname
+{ 
+	optional uint32 code = 1 [default = 1901];//协议号
+	required string  nickname= 2;  // 
+}  
+message SChangeNickname
+{ 
+	optional uint32 code = 1 [default=1901];//协议号
+	required string nickname= 2;  // 
+	optional uint32 error= 3 [default = 0]; // 错误码 
+}
+// 更改用户性别 
+message CChangeSex
+{ 
+	optional uint32 code = 1 [default = 1902];//协议号
+	required uint32 sex=2;//用户性别,男1 女2 非男非女3
+}  
+message SChangeSex
+{ 
+	optional uint32 code = 1 [default=1902];//协议号
+	required uint32 sex=2;//用户性别,男1 女2 非男非女3
+	optional uint32 error= 3 [default = 0]; // 错误码 
+}
+//  战绩
+message CArchieve
+{ 
+	optional uint32 code = 1 [default = 1904];//协议号
+	required string userid =2;//用户账号
+}  
+message SArchieve
+{ 
+	optional uint32 code = 1 [default=1904];//协议号
+	required string best=2;// 最佳胡型
+	required uint32 maxcoin=3;//最高持有金币数量 
+	required uint32 gaincoin=4;//总赢得的金币数量(只算赢得的)
+	required uint32 singlecoin=5;//单次赢得最多金币数量
+
+	required uint32 qinglongdui=6;//青龙对
+	required uint32 longqi=7;//龙七对
+	required uint32 qingqi=8;//清七对
+	required uint32 qingdui=9;//清大对
+	required uint32 qing=10;//清一色
+	required uint32 qidui=11;//七小对
+	required uint32 pengpenghu=12;//清一色
+	required uint32 tianhu=13;//天胡
+	required uint32 dihu=14;//地胡
+
+	required string userid =15;//用户账号
+	required uint32 hutype=16;// 最佳胡牌类型
+	optional uint32 error= 17 [default = 0]; // 错误码 
+}
+  
+// 获取玩家的数据
+message CUserData
+{ 
+	optional uint32 code = 1 [default=1020];//协议号
+	required string userid =2;//用户账号
+}
+message SUserData
+{ 
+	optional uint32 code = 1 [default=1020];//协议号
+	required UserData data =2;
+	optional uint32 error= 3[default=0];  // 错误码 
+}
+
+// 防沉迷限制
+message SChenmi
+{ 
+	optional uint32 code = 1 [default=1021];//协议号
+	optional int32  coin = 2;  // 输掉金额 
+}

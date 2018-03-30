@@ -1,0 +1,237 @@
+// 约定：首字母为C是客户端请求协议，首字母为S是服务器返回协议，其他为嵌套结构体
+
+// 私人房间协议
+package protocol; 
+import "vo.proto";
+
+// 进入私人房间,包括观众，断线重连，私人房间进入拍桌全部通用接口
+message CEnterSocialRoom
+{ 
+	optional uint32 code = 1 [default = 7001];//协议号
+	required string invitecode= 2; //房间邀请码,每个私人局房间都有一个唯一的邀请码
+	required string longitude  = 4; // 经度
+	required string latitude  = 5; // 纬度
+}
+
+message SEnterSocialRoom
+{ 
+	optional uint32 code         = 1 [default = 7001];//协议号
+	required uint32 Position     = 2;//玩家座位号
+	required RoomData room       = 3;//房间的详细资料
+	repeated ProtoUser userinfo  = 4;//已在房间的其他玩家基础信息,不包括自己的
+	required bool beginning      = 5;//牌局是否已经开始,如果本字段为false,则一下字段都为空,跳过处理
+	required uint32 cardsCount   = 6;//剩余未摸起的牌数
+	required uint32 dice         = 7;//1-6的骰子数，分别用高位两字节和低位两字节表示两个骰子
+	required uint32 kongCount    = 8;//杠的数量,即桌牌尾部被摸的数量
+	required uint32 luckyCard = 9; // 本局的财神牌值
+	repeated ProtoCard cards     =11;//4个玩家，除手牌以外的牌型
+	required uint32 turn         =12;//当前打牌玩家
+	required bytes handcards     =13;//玩家手牌,牌局未开始或者是旁观者，本字段没数据
+	required int64 value        =14;//碰杠胡掩码
+	required uint32 watchseat    =15;//如果你是旁观者,被观看的玩家座位,随机观看牌桌玩家的手牌
+	required bool ready          =16;//玩家de准备状态
+	required int32  score        =17;//当前积分
+	required uint32 ma           =18;//马的数量双数(0-8)
+	required uint32 launchSeat   =19;//发起投票的玩家座位号，如果为0，则没有投票事件发生,可以忽略下面两个字段
+	repeated uint32 voteAgree    =20;//
+	repeated uint32 voteDisagree =21;//发起投票的玩家座位号，如果为0，则没有投票事件发生
+	required string	conferenceId =22;//会议id
+	required int32 mazi          =23;// 没买子为-1
+	optional uint32 error        =24 [default = 0]; // 错误码
+}
+
+// 私人局离开房间
+message CPrivateLeave
+{
+	optional uint32 code = 1 [default = 7006];//协议号
+}
+message SPrivateLeave
+{
+	optional uint32 code = 1 [default = 7006];//协议号
+	required uint32 seat= 2;	//玩家选择的座位号
+	required uint32 error= 3 [default = 0]; // 错误码
+}
+// 私人局，准备游戏
+message CReady
+{
+	optional uint32 code = 1 [default = 7008];//协议号
+	required bool ready  = 2;	//true准备,false取消
+}
+message SReady
+{
+	optional uint32 code = 1 [default = 7008];//协议号
+	required uint32 seat = 2;	//准备游戏的玩家座位
+	required bool ready  = 3;	//true准备,false取消
+	optional uint32 error= 4 [default = 0]; // 错误码 
+
+}
+
+message SPrivateOver
+{
+	optional uint32 code   = 1 [default = 7009];//协议号
+	required uint32 cid    = 2;  // 圈子id
+	required uint32 roomid = 3;  // 牌局id
+	required uint32 round  = 4;  // 剩余牌局数
+	required uint32 expire = 5;  // 牌局设定的时间（牌局存在的时间）
+	repeated PrivateScore list = 6;  // 积分情况
+}
+
+message PrivateScore
+{
+	required string userid = 1; //用户id
+	required int32  score  = 2; //当前积分
+}
+
+// 进入房间7001，离开房间7006，准备游戏7008
+// 私人局,创建房间
+message CCreatePrivateRoom
+{ 
+	optional uint32 code    = 1 [default = 7010];//协议号
+	required string rname   = 2;  //房间名字
+	required uint32 rtype   = 3;  //房间类型,里面定义低注等
+	required bool 	maizi= 4;  // 是否买子
+	required uint32 ante    = 5;  //底分
+	required uint32 round   = 6;  //牌局数(8或者16)
+	required uint32 payment = 7;  //付费方式0=房主付费,1=AA付费
+	required uint32 ma= 8;  	//马的数量双数(0-8)
+	required string longitude  = 10; // 经度
+	required string latitude  = 11; // 纬度
+}
+
+// 返回房间数据,
+message SCreatePrivateRoom
+{ 
+	optional uint32 code    = 1 [default = 7010];//协议号
+	required RoomData rdata = 2; //
+	optional uint32 error   = 3 [default = 0]; // 错误码 
+}
+
+// 私人局,通知房主可以开始游戏
+message SStart
+{
+	optional uint32 code   = 1 [default = 7011];//协议号
+	required uint32 result = 2;	// 1=可以开始游戏
+}
+
+// 私人局,房主开始游戏
+message CStartGame
+{
+	optional uint32 code   = 1 [default = 7012];//协议号
+}
+
+message SStartGame
+{
+	optional uint32 code   = 1 [default = 7012];//协议号
+	required uint32 result = 2;	// 1=游戏开始
+	optional uint32 error  = 3 [default = 0]; // 错误码 
+}
+
+// 私人局,发起投票申请解散房间
+message CLaunchVote
+{
+	optional uint32 code = 1 [default = 7014];//协议号
+}
+message SLaunchVote
+{
+	optional uint32 code = 1 [default = 7014];//协议号
+	required uint32 seat = 2;	//发起人玩家座位号
+	optional uint32 error= 3;
+}
+
+// 私人局,发起投票,投票解散房间,如果投票成功，服务器主动推送SKick协议，并且reason字段值为1
+message CVote
+{
+	optional uint32 code = 1 [default = 7015];//协议号
+	required uint32 vote = 2;	//0同意,1不同意
+}
+
+message SVote
+{
+	optional uint32 code = 1 [default = 7015];//协议号
+	required uint32 vote = 2;	//0同意,1不同意
+	required uint32 seat = 3;	//投票玩家座位号
+	optional uint32  error= 4; 
+}
+
+// 投票解散房间事件结果,服务器主动推送
+message SVoteResult
+{
+	optional uint32 code = 1 [default = 7016];//协议号
+	required uint32 vote = 2;	//0半数通过马上解散房间,1半数以上不通过终止解散房间
+}
+
+message CPrivateRecord
+{
+	optional uint32 code   = 1 [default = 7017];//协议号
+	required uint32 page= 2;  //页码(大于0的数值)
+	required uint32 pageMax= 3;  //每页展示记录条数(10-200之间的整数)
+}
+
+message SPrivateRecord
+{
+	optional uint32 code         = 1 [default = 7017];//协议号
+	repeated PrivateRecord list  = 2;//
+	optional uint32 error        = 3 [default = 0]; // 错误码 
+}
+//获取玩家的私人房间记录
+message PrivateRecord
+{
+	required uint32 time   = 1;  //记录时间
+	required uint32 rid= 2;  //房间唯一ID
+	required string invitecode= 3;  //房间邀请码
+	required string rname  = 4;  //房间名字
+	required uint32 ante   = 5;  //房间底分
+	required uint32 totalRound= 6;  //总局数
+	required uint32 ma= 7;  //马的数量
+	required int32 coin    = 8;  //玩家的输赢结果
+	required uint32 round= 9;  //当前局数
+	repeated PrivateRecordDetails list    = 10;  //玩家的输赢详细结果
+	repeated PrivateRecords lists    = 11;  //玩家的输赢详细结果,展示第一局
+}
+
+message PrivateRecordDetails
+{
+	required uint32 seat   = 1;  //玩家座位号
+	required string userid = 2;  //玩家id
+	required string uname  = 3;  //玩家名字
+	required uint32 sex	=4;//用户性别,男1 女2 非男非女3
+	required string photo = 5;  //玩家头像
+	required int32 coin    = 6;  //玩家的输赢结果
+}
+
+//一局一局展示协议
+message PrivateRecords
+{
+	required uint32 round = 1;  //牌局局数
+	repeated PrivateDetails list = 2;  //玩家的输赢详细结果
+}
+
+//当局输赢情况
+message PrivateDetails
+{
+	required string uname = 1; //玩家名字
+	required int32  coin  = 2; //玩家的输赢结果
+}
+
+//   根据私人房房间号,获取记录该房间所以记录    
+message CPRecordByRid
+{
+	optional uint32 code   = 1 [default = 7019];//协议号
+	required uint32 rid= 2;  // room id  
+}
+
+message SPRecordByRid
+{
+	optional uint32 code  = 1 [default = 7019];//协议号
+	required uint32 time   = 2;  //记录时间
+	required uint32 rid= 3;  //房间唯一ID
+	required string invitecode= 4;  //房间邀请码
+	required string rname  = 5;  //房间名字
+	required uint32 ante   = 6;  //房间底分
+	required uint32 totalRound= 7;  //总局数
+	required uint32 ma= 8;  //马的数量
+	repeated PrivateRecordDetails list    = 9;  //玩家的输赢详细结果
+	optional uint32 error        = 10 [default = 0]; // 错误码 
+}
+
+

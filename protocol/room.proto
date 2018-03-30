@@ -1,0 +1,222 @@
+// 约定：首字母为C是客户端请求协议，首字母为S是服务器返回协议，其他为嵌套结构体
+// 房间协议
+package protocol;
+import "vo.proto";
+// 匹配并进入房间
+message CComein {
+    optional uint32 code = 1 [default = 2000]; //协议号
+    required uint32 rtype = 2; //场次
+}
+
+// 玩家进入房间，如果成功，会广播房间其他玩家
+message SComein {
+    optional uint32 code = 1 [default = 2000]; //协议号
+    required uint32 Position = 2; // 玩家座位号
+    required ProtoRoom room = 3; //房间信息
+    repeated ProtoUser userinfo = 4; // 已在房间的其他玩家基础信息
+    required uint32 rtype = 5; //场次
+    optional uint32 error = 6 [default = 0]; // 错误码
+}
+
+// 其他玩家进入房间
+message SOtherComein {
+    optional uint32 code = 1 [default = 2001]; //协议号
+    required ProtoUser userinfo = 2; // 玩家的信息
+    optional uint32 error = 3 [default = 0]; // 错误码
+}
+// 打庄
+message SZhuang {
+    optional uint32 code = 1 [default = 2002]; //协议号
+    required uint32 zhuang = 2; //
+    required uint32 lian = 3; // 连庄次数，0：非连庄
+    required uint32 watchseat = 4; //如果你是旁观者,被观看的玩家座位,随机观看牌桌玩家的手牌
+    optional uint32 error = 5 [default = 0]; // 错误码
+}
+
+// 进入指定房间 响应2000
+message CComeinRoomid {
+    optional uint32 code = 1 [default = 2003]; //协议号
+    required uint32 roomid = 2; //房间ID
+}
+
+// 等待玩家打骰子
+message SWaitBroken {
+    optional uint32 code = 1 [default = 2008]; //协议号
+}
+//玩家打骰子
+message CBroken {
+    optional uint32 code = 1 [default = 2007]; //协议号
+}
+// 非广播接口(骰子数据合并到发牌广播数据里）
+message SBroken {
+    optional uint32 code = 1 [default = 2007]; //协议号
+    optional uint32 error = 2 [default = 0]; // 错误码
+}
+//庄家发牌,包含两个骰子数字
+message SZhuangDeal {
+    optional uint32 code = 1 [default = 2037]; //协议号
+    required uint32 dice = 2; //1-6的骰子数，分别用高位两字节和低位两字节表示两个骰子
+    required bytes cards = 3; //手牌14张
+    optional int64 value = 4; // 标志当前摸起的牌是否又杠胡，分别用掩码标示状态
+    optional uint32 luckyCard = 5; //本局的财神牌值
+    optional uint32 error = 6 [default = 0]; // 错误码
+}
+//发牌,包含两个骰子数字
+message SDeal {
+    optional uint32 code = 1 [default = 2004]; //协议号
+    required uint32 dice = 2; //1-6的骰子数，分别用高位两字节和低位两字节表示两个骰子
+    required bytes cards = 3; //手牌13张
+    required int64 value = 4; // 标志当前摸起的牌是否天听
+    optional uint32 luckyCard = 5; //本局的财神牌值
+    required uint32 error = 6 [default = 0]; // 错误码
+}
+
+//抓牌
+//明杠  MING_KONG uint32 = 2 << 1
+//暗杠	AN_KONG   uint32 = 2 << 2
+//补杠 	BU_KONG   uint32 = 2 << 3
+message SDraw {
+    optional uint32 code = 1 [default = 2005]; // 协议号
+    optional uint32 card = 2; // 所摸的牌
+    optional int64 value = 3; // 标志当前摸起的牌是否又杠胡，分别用掩码标示状态
+    optional uint32 kong = 4; // 1:杠后摸牌0:普通摸牌
+    required bytes cards = 5; // 手牌
+    optional uint32 remainder  = 6; // 剩余牌数量
+    optional uint32 error = 7 [default = 0]; // 错误码
+}
+// 出牌
+message CDiscard {
+    optional uint32 code = 1 [default = 2006]; //协议号
+    required int64 value = 2; // 地听的掩码值（如果有）
+    required uint32 card = 3; //牌值
+}
+
+//其他玩家摸牌
+message SOtherDraw {
+    optional uint32 code = 1 [default = 2016]; //协议号
+    required uint32 seat = 2; // 摸牌玩家的座位号(1-4)
+    optional uint32 kong = 3; //1:杠后摸牌0:普通摸牌
+    optional uint32 remainder  = 4; // 剩余牌数量
+    optional uint32 error = 5 [default = 0]; // 错误码
+}
+//玩家出牌广播
+message SDiscard {
+    optional uint32 code = 1 [default = 2006]; //协议号
+    required uint32 seat = 2; // 出牌玩家的座位号(1-4)
+    required uint32 card = 3; //牌值
+    required int64 value = 4; // 碰杠胡，掩码表示多种状态
+    required uint32 ting = 5; // 地听
+    optional uint32 error = 6 [default = 0]; // 错误码
+}
+// 玩家碰杠操作
+// 碰	PENG      uint32 = 2 << 0
+// 明杠	MING_KONG uint32 = 2 << 1
+//暗杠	AN_KONG   uint32 = 2 << 2
+//补杠 	BU_KONG   uint32 = 2 << 3
+message COperate {
+    optional uint32 code = 1 [default = 2012]; //协议号
+    required uint32 card = 2; //牌值
+    required int64 value= 3; //提交碰杠相应的单个掩码值，注意：明／补／暗杠时要提交相应具体的值.服务器碰牌时从手牌的索引0开始（即最左边）搜索并删除两个相同牌值的牌，相应在玩家的碰牌列表标志碰牌信息，手牌下标自动缩进
+}
+// 碰杠广播 ,胡牌不在这个接口返回
+message SOperate {
+    optional uint32 code = 1 [default = 2012]; //协议号
+    required uint32 seat = 2; // 碰牌和杠牌玩家的座位号
+    required uint32 beseat = 3; // 被碰杠胡的玩家座位号
+    required uint32 card = 4; // 被碰或杠牌的牌值，protobuf没提供单个字节类型，用uint32类型表示牌值
+    required uint32 dutycard = 5; //0:默认不处理 1:为责任鸡，2：取消责任鸡 (card 值为一条0x11时本字段才生效)
+    required int64 value = 6; // 碰或值杠，统一掩码标示
+    required int64 discontinue = 7; // 抢杠,或者吃、碰完手上有暗杠和补杠的情况
+    optional uint32 error = 8 [default = 0]; // 错误码
+}
+
+// 处理前面有玩家胡牌优先操作,如果该玩家跳过胡牌,此协议向有碰和明杠的玩家主动发送
+message SPengKong {
+    optional uint32 code = 1 [default = 2013]; //协议号
+    required uint32 seat = 2; // 出牌玩家的座位号(1-4)
+    required uint32 card = 3; //牌值
+    required int64 value = 4; // 碰杠胡，掩码表示多种状态
+}
+// 玩家胡牌，如果成功，会广播房间其他玩家
+message SHu {
+    optional uint32 code = 1 [default = 2030]; //协议号
+    required uint32 seat = 2; //玩家座位号
+    required uint32 targetSeat = 3; // 被胡牌的玩家座位号
+    required uint32 card = 4; // 胡牌的牌值(玩家胡的是哪张牌)
+    optional uint32 error = 5 [default = 0]; // 错误码
+}
+//胡牌独立接口,胡牌根碰杠接口分离，主要时胡牌算法比较复杂，单独方便处理, 代码量少
+message CHu {
+    optional uint32 code = 1 [default = 2030]; //协议号
+}
+
+// 结算广播接口，游戏结束
+message SGameover {
+    optional uint32 code = 1 [default = 2028]; //协议号
+    required uint32 huType = 2; // 0:黄庄，1:自摸，2:炮胡
+    required uint32 paoSeat = 3; // 放炮玩家座位号
+    repeated ProtoCount data = 4; // 黄庄不用解释本字段
+    required uint32 lianCount = 5; // 连庄数
+}
+
+// 房间广播文字聊天
+message CBroadcastChatText {
+    optional uint32 code = 1 [default = 2043]; //协议号
+    required bytes content = 2;
+}
+// 房间广播语音聊天
+message CBroadcastChat {
+    optional uint32 code = 1 [default = 2044]; //协议号
+    required bytes content = 2;
+}
+// 广播文字聊天
+message SBroadcastChatText {
+    optional uint32 code = 1 [default = 2043]; //协议号
+    required uint32 seat = 2;
+    required bytes content = 3;
+    optional uint32 error = 4 [default = 0]; // 错误码
+}
+// 广播语音聊天
+message SBroadcastChat {
+    optional uint32 code = 1 [default = 2044]; //协议号
+    required uint32 seat = 2;
+    required bytes content = 3;
+    optional uint32 error = 4 [default = 0]; // 错误码
+}
+
+
+// 抢杠
+message CQiangKong {
+    optional uint32 code = 1 [default = 2048]; //协议号
+}
+message SQiangKong {
+    optional uint32 code = 1 [default = 2048]; //协议号
+    required uint32 seat = 2; //玩家座位号
+    required uint32 targetSeat = 3; // 被抢杠胡的玩家座位号
+    required uint32 card = 4; // 抢杠胡的牌值(玩家胡的是哪张牌)
+    optional uint32 error = 5 [default = 0]; // 错误码
+}
+
+
+// 买子，有点类似卡五星的"漂"
+message CMaiZi {
+    optional uint32 code = 1 [default = 2084]; //协议号
+    required uint32 count = 2; //       买子数量(1-8)
+}
+
+// 广播接口
+message SMaiZi {
+    optional uint32 code = 1 [default = 2084]; //协议号
+    required uint32 count = 2; //       买子数量(1-8)
+    required uint32 seat = 3; //       买子的玩家座位
+    optional uint32 error = 4 [default = 0]; // 错误码
+}
+
+
+
+// 玩家离线和上线通知
+message SOffline {
+    optional uint32 code = 1 [default = 2086]; //协议号
+    required uint32 seat = 2; //     玩家座位
+    required bool status = 3; //     true:离线,false:上线
+}

@@ -1,0 +1,77 @@
+// 约定：首字母为C是客户端请求协议，首字母为S是服务器返回协议，其他为嵌套结构体
+package protocol; 
+import "vo.proto";
+message CPost
+{ 
+	optional uint32 code = 1 [default = 7701];//协议号
+}
+
+message SPost
+{ 
+	optional uint32 code = 1 [default = 7701];//协议号
+	repeated PostBoxData data= 2;  //   邮件数据 
+	optional uint32 error= 3 [default = 0]; // 错误码 
+}
+
+message CDelPost
+{ 
+	optional uint32 code = 1 [default = 7702];//协议号
+	required uint32 postid= 2;  //邮件 id
+}
+
+message SDelPost
+{ 
+	optional uint32 code = 1 [default = 7702];//协议号
+	required uint32 postid= 2;  //
+	optional uint32 error= 3 [default = 0]; // 错误码 
+}
+
+
+message CDelReadPost
+{ 
+	optional uint32 code = 1 [default = 7703];//协议号
+}
+
+message SDelReadPost
+{ 
+	optional uint32 code = 1 [default = 7703];//协议号
+	optional uint32 error= 2 [default = 0]; // 错误码 
+}
+
+
+message CDelAllPost
+{ 
+	optional uint32 code = 1 [default = 7704];//协议号
+}
+
+message SDelAllPost
+{ 
+	optional uint32 code = 1 [default = 7704];//协议号
+	optional uint32 error= 2 [default = 0]; // 错误码 
+}
+
+
+message COpenAppendix
+{ 
+	optional uint32 code = 1 [default = 7705];//协议号
+	required uint32 postid= 2;  //
+}
+
+message SOpenAppendix
+{ 
+	optional uint32 code = 1 [default = 7705];//协议号
+	required  PostAppendixData data= 2;  //
+	optional uint32 error= 3 [default = 0]; // 错误码 
+}
+message CReadPost
+{ 
+	optional uint32 code = 1 [default = 7706];//协议号
+	required  uint32 id= 2;  //邮件id 
+}
+
+message SReadPost
+{ 
+	optional uint32 code = 1 [default = 7706];//协议号
+	required  uint32 id= 2;  //   邮件id 
+	optional uint32 error= 3 [default = 0]; // 错误码 
+}
